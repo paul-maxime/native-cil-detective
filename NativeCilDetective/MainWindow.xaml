@@ -1,0 +1,27 @@
+﻿<Controls:MetroWindow x:Class="NativeCilDetective.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:NativeCilDetective"
+        xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" />
+            <ColumnDefinition Width="2*" />
+        </Grid.ColumnDefinitions>
+        <TreeView Grid.Column="0" Name="AssemblyTreeView" ItemsSource="{Binding Assemblies}" SelectedItemChanged="AssemblyTreeView_SelectedItemChanged"
+            VirtualizingStackPanel.IsVirtualizing="True"
+            VirtualizingStackPanel.VirtualizationMode="Recycling">
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding TreeViewChildren}" DataType="{x:Type local:IAssemblyTreeViewChild}">
+                    <TextBlock Text="{Binding TreeViewLabel}"/>
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+        <RichTextBox Name="CodeRichTextBox" Grid.Column="1" IsReadOnly="True" IsReadOnlyCaretVisible="True" IsUndoEnabled="False" IsManipulationEnabled="False" FontFamily="Lucida Console" ScrollViewer.VerticalScrollBarVisibility="Auto">
+        </RichTextBox>
+    </Grid>
+</Controls:MetroWindow>
