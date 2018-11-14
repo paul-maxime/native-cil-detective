@@ -3,7 +3,6 @@ using NativeCilDetective.Disassembler;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Documents;
@@ -26,8 +25,7 @@ namespace NativeCilDetective
         private readonly Brush ParsedInstructionBrush = new SolidColorBrush(Color.FromRgb(255, 216, 102));
         private readonly Brush UnknownInstructionBrush = new SolidColorBrush(Color.FromRgb(249, 250, 244));
 
-        private OffsetsCollector offsetsCollector;
-        private MethodDisassembler nativeDisassembler;
+        private NativeDetective detective;
 
         public MainWindow()
         {
@@ -101,16 +99,12 @@ namespace NativeCilDetective
 
         public void AnalysePath(string il2cppDumpPath, string nativeAssemblyPath)
         {
-            offsetsCollector = new OffsetsCollector(il2cppDumpPath);
-            offsetsCollector.ReadStrings();
-            offsetsCollector.ReadMethods();
+            detective = new NativeDetective(il2cppDumpPath, nativeAssemblyPath);
 
             AssemblyTreeView.DataContext = new TestViewModel
             {
-                Assemblies = offsetsCollector.Assemblies.Select(x => new AssemblyViewModel(x))
+                Assemblies = detective.Offsets.Assemblies.Select(x => new AssemblyViewModel(x))
             };
-
-            nativeDisassembler = new MethodDisassembler(File.ReadAllBytes(nativeAssemblyPath), offsetsCollector);
 
             SetCodeContent("Click somewhere!");
         }
@@ -197,7 +191,7 @@ namespace NativeCilDetective
             {
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
-                var instructions = methodViewModel.Disassemble(nativeDisassembler);
+                var instructions = methodViewModel.Disassemble(detective.Disassembler);
                 sw.Stop();
                 Console.WriteLine(sw.ElapsedMilliseconds + "ms to disassemble");
 
