@@ -15,10 +15,12 @@ namespace NativeCilDetective.Disassembler
         public IReadOnlyCollection<AssemblyDefinition> Assemblies { get => assemblies.AsReadOnly(); }
         private List<AssemblyDefinition> assemblies;
 
+        public IReadOnlyCollection<MethodDefinition> Methods { get => methods.AsReadOnly(); }
+        private List<MethodDefinition> methods;
+
         public IDictionary<long, string> StringsFromOffsets { get; private set; }
 
         public IDictionary<long, MethodDefinition> MethodsFromOffsets { get; private set; }
-
 
         public OffsetsCollector(string il2cppDumpPath)
         {
@@ -57,6 +59,7 @@ namespace NativeCilDetective.Disassembler
 
             MethodsFromOffsets = new Dictionary<long, MethodDefinition>();
             assemblies = new List<AssemblyDefinition>();
+            methods = new List<MethodDefinition>();
             foreach (string file in Directory.GetFiles(folder))
             {
                 if (file.ToUpper().EndsWith(".DLL"))
@@ -96,6 +99,8 @@ namespace NativeCilDetective.Disassembler
 
         private void AnalyzeMethod(MethodDefinition method)
         {
+            methods.Add(method);
+
             long offset = GetMethodOffset(method);
             if (offset != -1 && !MethodsFromOffsets.ContainsKey(offset))
             {

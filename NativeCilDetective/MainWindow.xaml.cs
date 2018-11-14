@@ -35,21 +35,14 @@ namespace NativeCilDetective
 
         class MethodViewModel : IAssemblyTreeViewChild
         {
-            public string TreeViewLabel => $"{method.Name}({string.Join(", ", method.Parameters.Select(x => x.ParameterType.Name))}) : {method.ReturnType.Name}";
+            public string TreeViewLabel => $"{Method.Name}({string.Join(", ", Method.Parameters.Select(x => x.ParameterType.Name))}) : {Method.ReturnType.Name}";
             public IEnumerable<IAssemblyTreeViewChild> TreeViewChildren => null;
 
-            private readonly MethodDefinition method;
+            public MethodDefinition Method { get; private set; }
 
             public MethodViewModel(MethodDefinition method)
             {
-                this.method = method;
-            }
-
-            public IList<TranslatedInstruction> Disassemble(MethodDisassembler disassembler)
-            {
-                long offset = OffsetsCollector.GetMethodOffset(method);
-                if (offset == -1) return null;
-                return disassembler.DisassembleMethod(method, OffsetsCollector.GetMethodOffset(method));
+                Method = method;
             }
         }
 
@@ -191,9 +184,9 @@ namespace NativeCilDetective
             {
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
-                var instructions = methodViewModel.Disassemble(detective.Disassembler);
+                var instructions = detective.DisassembleMethod(methodViewModel.Method);
                 sw.Stop();
-                Console.WriteLine(sw.ElapsedMilliseconds + "ms to disassemble");
+                Console.WriteLine($"Took {sw.ElapsedMilliseconds} ms to disassemble.");
 
                 if (instructions != null)
                 {
@@ -216,6 +209,20 @@ namespace NativeCilDetective
 
         private void MethodFindUsages_Click(object sender, RoutedEventArgs e)
         {
+            if (AssemblyTreeView.SelectedItem is MethodViewModel methodViewModel)
+            {
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
+                var usages = detective.UsageFinder.FindUsages(methodViewModel.Method);
+                sw.Stop();
+                Console.WriteLine($"Took {sw.ElapsedMilliseconds} ms to find usages.");
+
+                UsageResultsListView.Items.Clear();
+                foreach (var usage in usages)
+                {
+                    UsageResultsListView.Items.Add($"{usage.Method.FullName} (x{usage.Count})");
+                }
+            }
         }
     }
 }
