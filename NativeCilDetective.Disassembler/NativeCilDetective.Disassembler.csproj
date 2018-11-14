@@ -51,7 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="InstructionTranslater.cs" />
-    <Compile Include="NativeDisassembler.cs" />
+    <Compile Include="MethodDisassembler.cs" />
     <Compile Include="OffsetsCollector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TranslatedInstruction.cs" />

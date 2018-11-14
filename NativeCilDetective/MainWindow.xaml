@@ -7,21 +7,31 @@
         xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*" />
-            <ColumnDefinition Width="2*" />
-        </Grid.ColumnDefinitions>
-        <TreeView Grid.Column="0" Name="AssemblyTreeView" ItemsSource="{Binding Assemblies}" SelectedItemChanged="AssemblyTreeView_SelectedItemChanged"
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="File">
+                <MenuItem Header="Quit" />
+            </MenuItem>
+            <MenuItem Name="MethodMenuItem" Header="Method" Visibility="Hidden">
+                <MenuItem Header="Find usages" Click="MethodFindUsages_Click" />
+            </MenuItem>
+        </Menu>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="2*" />
+            </Grid.ColumnDefinitions>
+            <TreeView Grid.Column="0" Name="AssemblyTreeView" ItemsSource="{Binding Assemblies}" SelectedItemChanged="AssemblyTreeView_SelectedItemChanged"
             VirtualizingStackPanel.IsVirtualizing="True"
             VirtualizingStackPanel.VirtualizationMode="Recycling">
-            <TreeView.ItemTemplate>
-                <HierarchicalDataTemplate ItemsSource="{Binding TreeViewChildren}" DataType="{x:Type local:IAssemblyTreeViewChild}">
-                    <TextBlock Text="{Binding TreeViewLabel}"/>
-                </HierarchicalDataTemplate>
-            </TreeView.ItemTemplate>
-        </TreeView>
-        <RichTextBox Name="CodeRichTextBox" Grid.Column="1" IsReadOnly="True" IsReadOnlyCaretVisible="True" IsUndoEnabled="False" IsManipulationEnabled="False" FontFamily="Lucida Console" ScrollViewer.VerticalScrollBarVisibility="Auto">
-        </RichTextBox>
-    </Grid>
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate ItemsSource="{Binding TreeViewChildren}" DataType="{x:Type local:IAssemblyTreeViewChild}">
+                        <TextBlock Text="{Binding TreeViewLabel}"/>
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+            <RichTextBox Name="CodeRichTextBox" Grid.Column="1" IsReadOnly="True" IsReadOnlyCaretVisible="True" IsUndoEnabled="False" IsManipulationEnabled="False" FontFamily="Lucida Console" ScrollViewer.VerticalScrollBarVisibility="Auto">
+            </RichTextBox>
+        </Grid>
+    </DockPanel>
 </Controls:MetroWindow>

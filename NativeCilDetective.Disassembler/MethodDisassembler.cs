@@ -5,12 +5,12 @@ using System.Collections.Generic;
 
 namespace NativeCilDetective.Disassembler
 {
-    public class NativeDisassembler
+    public class MethodDisassembler
     {
         public OffsetsCollector Offsets { get; }
         public byte[] NativeDllCode { get; }
 
-        public NativeDisassembler(byte[] nativeDllCode, OffsetsCollector offsets)
+        public MethodDisassembler(byte[] nativeDllCode, OffsetsCollector offsets)
         {
             NativeDllCode = nativeDllCode;
             Offsets = offsets;

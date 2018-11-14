@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
 
@@ -26,7 +27,7 @@ namespace NativeCilDetective
         private readonly Brush UnknownInstructionBrush = new SolidColorBrush(Color.FromRgb(249, 250, 244));
 
         private OffsetsCollector offsetsCollector;
-        private NativeDisassembler nativeDisassembler;
+        private MethodDisassembler nativeDisassembler;
 
         public MainWindow()
         {
@@ -46,7 +47,7 @@ namespace NativeCilDetective
                 this.method = method;
             }
 
-            public IList<TranslatedInstruction> Disassemble(NativeDisassembler disassembler)
+            public IList<TranslatedInstruction> Disassemble(MethodDisassembler disassembler)
             {
                 long offset = OffsetsCollector.GetMethodOffset(method);
                 if (offset == -1) return null;
@@ -109,7 +110,7 @@ namespace NativeCilDetective
                 Assemblies = offsetsCollector.Assemblies.Select(x => new AssemblyViewModel(x))
             };
 
-            nativeDisassembler = new NativeDisassembler(File.ReadAllBytes(nativeAssemblyPath), offsetsCollector);
+            nativeDisassembler = new MethodDisassembler(File.ReadAllBytes(nativeAssemblyPath), offsetsCollector);
 
             SetCodeContent("Click somewhere!");
         }
@@ -188,8 +189,10 @@ namespace NativeCilDetective
             paragraph.Inlines.AddRange(inlines);
         }
 
-        private void AssemblyTreeView_SelectedItemChanged(object sender, System.Windows.RoutedPropertyChangedEventArgs<object> e)
+        private void AssemblyTreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
+            MethodMenuItem.Visibility = AssemblyTreeView.SelectedItem is MethodViewModel ? Visibility.Visible : Visibility.Hidden;
+
             if (AssemblyTreeView.SelectedItem is MethodViewModel methodViewModel)
             {
                 Stopwatch sw = new Stopwatch();
@@ -215,6 +218,10 @@ namespace NativeCilDetective
             {
                 SetCodeContent("");
             }
+        }
+
+        private void MethodFindUsages_Click(object sender, RoutedEventArgs e)
+        {
         }
     }
 }
