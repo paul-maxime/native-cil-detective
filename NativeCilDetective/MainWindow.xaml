@@ -25,9 +25,13 @@
                 <RowDefinition Height="3*" />
                 <RowDefinition Height="1*" />
             </Grid.RowDefinitions>
-            <TreeView Grid.Column="0" Grid.Row="0" Name="AssemblyTreeView" ItemsSource="{Binding Assemblies}" SelectedItemChanged="AssemblyTreeView_SelectedItemChanged"
-            VirtualizingStackPanel.IsVirtualizing="True"
-            VirtualizingStackPanel.VirtualizationMode="Recycling">
+            <TreeView Grid.Column="0" Grid.Row="0" Name="AssemblyTreeView" ItemsSource="{Binding Assemblies}" TreeViewItem.Selected="AssemblyTreeView_SelectedItemChanged">
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="{x:Type TreeViewItem}">
+                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                    </Style>
+                </TreeView.ItemContainerStyle>
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding TreeViewChildren}" DataType="{x:Type local:IAssemblyTreeViewChild}">
                         <TextBlock Text="{Binding TreeViewLabel}"/>
@@ -37,6 +41,16 @@
             <RichTextBox Grid.Column="1" Grid.Row="0" Name="CodeRichTextBox" IsReadOnly="True" IsReadOnlyCaretVisible="True" IsUndoEnabled="False" IsManipulationEnabled="False" FontFamily="Lucida Console" ScrollViewer.VerticalScrollBarVisibility="Auto">
             </RichTextBox>
             <ListView Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Name="UsageResultsListView">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <EventSetter Event="MouseDoubleClick" Handler="UsageResultsListView_MouseDoubleClick" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Label}" />
+                    </DataTemplate>
+                </ListView.ItemTemplate>
             </ListView>
         </Grid>
     </DockPanel>

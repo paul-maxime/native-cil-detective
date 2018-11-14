@@ -2,10 +2,14 @@
 using NativeCilDetective.Disassembler;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace NativeCilDetective
@@ -14,6 +18,8 @@ namespace NativeCilDetective
     {
         string TreeViewLabel { get; }
         IEnumerable<IAssemblyTreeViewChild> TreeViewChildren { get; }
+        bool IsExpanded { get; set; }
+        bool IsSelected { get; set; }
     }
 
     public partial class MainWindow
@@ -33,10 +39,29 @@ namespace NativeCilDetective
             AnalysePath(@"C:\Users\Maxou\Desktop\Il2CppDumper\Il2CppDumper\bin\Debug\", @"C:\Users\Maxou\Downloads\PROClient x64\GameAssembly.dll");
         }
 
-        class MethodViewModel : IAssemblyTreeViewChild
+        abstract class TreeElementViewModelBase : IAssemblyTreeViewChild, INotifyPropertyChanged
         {
-            public string TreeViewLabel => $"{Method.Name}({string.Join(", ", Method.Parameters.Select(x => x.ParameterType.Name))}) : {Method.ReturnType.Name}";
-            public IEnumerable<IAssemblyTreeViewChild> TreeViewChildren => null;
+            public abstract string TreeViewLabel { get; }
+            public abstract IEnumerable<IAssemblyTreeViewChild> TreeViewChildren { get; }
+
+            public bool IsExpanded { get => isExpanded; set { isExpanded = value; NotifyPropertyChanged(); } }
+            private bool isExpanded = false;
+
+            public bool IsSelected { get => isSelected; set { isSelected = value; NotifyPropertyChanged(); } }
+            private bool isSelected = false;
+
+            public event PropertyChangedEventHandler PropertyChanged;
+
+            protected void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+
+        class MethodViewModel : TreeElementViewModelBase
+        {
+            public override string TreeViewLabel => $"{Method.Name}({string.Join(", ", Method.Parameters.Select(x => x.ParameterType.Name))}) : {Method.ReturnType.Name}";
+            public override IEnumerable<IAssemblyTreeViewChild> TreeViewChildren => null;
 
             public MethodDefinition Method { get; private set; }
 
@@ -46,46 +71,52 @@ namespace NativeCilDetective
             }
         }
 
-        class TypeViewModel : IAssemblyTreeViewChild
+        class TypeViewModel : TreeElementViewModelBase
         {
-            public string TreeViewLabel => type.Name;
-            public IEnumerable<IAssemblyTreeViewChild> TreeViewChildren => type.Methods.Select(x => new MethodViewModel(x)).OrderBy(x => x.TreeViewLabel);
+            public override string TreeViewLabel => type.Name;
+            public override IEnumerable<IAssemblyTreeViewChild> TreeViewChildren => children;
 
             private readonly TypeDefinition type;
+            private readonly IList<IAssemblyTreeViewChild> children;
 
             public TypeViewModel(TypeDefinition type)
             {
                 this.type = type;
+                children = type.Methods.Select(x => new MethodViewModel(x)).OrderBy(x => x.TreeViewLabel).ToList<IAssemblyTreeViewChild>();
             }
         }
 
-        class ModuleViewModel : IAssemblyTreeViewChild
+        class ModuleViewModel : TreeElementViewModelBase
         {
-            public string TreeViewLabel => module.Name;
-            public IEnumerable<IAssemblyTreeViewChild> TreeViewChildren => module.Types.Select(x => new TypeViewModel(x)).OrderBy(x => x.TreeViewLabel);
+            public override string TreeViewLabel => module.Name;
+            public override IEnumerable<IAssemblyTreeViewChild> TreeViewChildren => children;
 
             private readonly ModuleDefinition module;
+            private readonly IList<IAssemblyTreeViewChild> children;
 
             public ModuleViewModel(ModuleDefinition module)
             {
                 this.module = module;
+                children = module.Types.Select(x => new TypeViewModel(x)).OrderBy(x => x.TreeViewLabel).ToList<IAssemblyTreeViewChild>();
             }
         }
 
-        class AssemblyViewModel : IAssemblyTreeViewChild
+        class AssemblyViewModel : TreeElementViewModelBase
         {
-            public string TreeViewLabel => assembly.Name.Name;
-            public IEnumerable<IAssemblyTreeViewChild> TreeViewChildren => assembly.Modules.Select(x => new ModuleViewModel(x)).OrderBy(x => x.TreeViewLabel);
+            public override string TreeViewLabel => assembly.Name.Name;
+            public override IEnumerable<IAssemblyTreeViewChild> TreeViewChildren => children;
 
             private readonly AssemblyDefinition assembly;
+            private readonly IList<IAssemblyTreeViewChild> children;
 
             public AssemblyViewModel(AssemblyDefinition assembly)
             {
                 this.assembly = assembly;
+                children = assembly.Modules.Select(x => new ModuleViewModel(x)).OrderBy(x => x.TreeViewLabel).ToList<IAssemblyTreeViewChild>();
             }
         }
 
-        class TestViewModel
+        class RootViewModel
         {
             public IEnumerable<AssemblyViewModel> Assemblies { get; set; }
         }
@@ -94,7 +125,7 @@ namespace NativeCilDetective
         {
             detective = new NativeDetective(il2cppDumpPath, nativeAssemblyPath);
 
-            AssemblyTreeView.DataContext = new TestViewModel
+            AssemblyTreeView.DataContext = new RootViewModel
             {
                 Assemblies = detective.Offsets.Assemblies.Select(x => new AssemblyViewModel(x))
             };
@@ -176,10 +207,15 @@ namespace NativeCilDetective
             paragraph.Inlines.AddRange(inlines);
         }
 
-        private void AssemblyTreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        private void AssemblyTreeView_SelectedItemChanged(object sender, RoutedEventArgs e)
         {
-            MethodMenuItem.Visibility = AssemblyTreeView.SelectedItem is MethodViewModel ? Visibility.Visible : Visibility.Hidden;
+            if (e.OriginalSource is TreeViewItem senderItem)
+            {
+                senderItem.BringIntoView();
+            }
 
+            MethodMenuItem.Visibility = AssemblyTreeView.SelectedItem is MethodViewModel ? Visibility.Visible : Visibility.Hidden;
+            
             if (AssemblyTreeView.SelectedItem is MethodViewModel methodViewModel)
             {
                 Stopwatch sw = new Stopwatch();
@@ -207,6 +243,55 @@ namespace NativeCilDetective
             }
         }
 
+        private void OpenAndSelectMethod(MethodDefinition method)
+        {
+            foreach (var item in AssemblyTreeView.Items)
+            {
+                var treeViewItem = (IAssemblyTreeViewChild)item;
+                if (OpenAndSelectMethod(treeViewItem, method))
+                {
+                    treeViewItem.IsExpanded = true;
+                }
+            }
+        }
+
+        private bool OpenAndSelectMethod(IAssemblyTreeViewChild parent, MethodDefinition method)
+        {
+            foreach (var item in parent.TreeViewChildren)
+            {
+                if (item is MethodViewModel methodViewModel)
+                {
+                    if (methodViewModel.Method == method)
+                    {
+                        methodViewModel.IsSelected = true;
+                        return true;
+                    }
+                }
+                else if (item is IAssemblyTreeViewChild child)
+                {
+                    if (OpenAndSelectMethod(child, method))
+                    {
+                        child.IsExpanded = true;
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private class UsageViewModel
+        {
+            public string Label { get => $"{usage.Method.FullName} (x{usage.Count})"; }
+            public MethodDefinition Method { get => usage.Method; }
+
+            private readonly MethodUsageFinder.Usage usage;
+
+            public UsageViewModel(MethodUsageFinder.Usage usage)
+            {
+                this.usage = usage;
+            }
+        }
+
         private void MethodFindUsages_Click(object sender, RoutedEventArgs e)
         {
             if (AssemblyTreeView.SelectedItem is MethodViewModel methodViewModel)
@@ -220,7 +305,18 @@ namespace NativeCilDetective
                 UsageResultsListView.Items.Clear();
                 foreach (var usage in usages)
                 {
-                    UsageResultsListView.Items.Add($"{usage.Method.FullName} (x{usage.Count})");
+                    UsageResultsListView.Items.Add(new UsageViewModel(usage));
+                }
+            }
+        }
+
+        private void UsageResultsListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is ListViewItem listViewItem)
+            {
+                if (listViewItem.Content is UsageViewModel usageViewModel)
+                {
+                    OpenAndSelectMethod(usageViewModel.Method);
                 }
             }
         }
