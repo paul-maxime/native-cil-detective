@@ -54,15 +54,12 @@ namespace NativeCilDetective.Disassembler
 
         public TranslatedInstruction Translate(Instruction instruction, ulong instructionOffset)
         {
-            if (instruction.Code == Code.Mov_r64_rm64)
+            if (instruction.OpCount == 2 && instruction.Op0Kind == OpKind.Register && instruction.Op1Kind == OpKind.Memory && instruction.MemoryBase == Register.RIP)
             {
-                if (instruction.OpCount == 2 && instruction.Op0Kind == OpKind.Register && instruction.Op1Kind == OpKind.Memory && instruction.MemoryBase == Register.RIP)
+                long offset = (long)instruction.IPRelativeMemoryAddress + currentMethodOffset;
+                if (offsets.StringsFromOffsets.ContainsKey(offset))
                 {
-                    long offset = (long)instruction.IPRelativeMemoryAddress + currentMethodOffset;
-                    if (offsets.StringsFromOffsets.ContainsKey(offset))
-                    {
-                        return new TranslatedInstruction(instruction, instructionOffset, offsets.StringsFromOffsets[offset]);
-                    }
+                    return new TranslatedInstruction(instruction, instructionOffset, offsets.StringsFromOffsets[offset]);
                 }
             }
 
