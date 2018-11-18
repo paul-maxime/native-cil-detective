@@ -71,6 +71,19 @@ namespace NativeCilDetective
             }
         }
 
+        class FieldViewModel : TreeElementViewModelBase
+        {
+            public override string TreeViewLabel => $"{Field.Name} : {Field.FieldType.Name}";
+            public override IEnumerable<IAssemblyTreeViewChild> TreeViewChildren => null;
+
+            public FieldDefinition Field { get; private set; }
+
+            public FieldViewModel(FieldDefinition field)
+            {
+                Field = field;
+            }
+        }
+
         class TypeViewModel : TreeElementViewModelBase
         {
             public override string TreeViewLabel => type.Name;
@@ -82,7 +95,11 @@ namespace NativeCilDetective
             public TypeViewModel(TypeDefinition type)
             {
                 this.type = type;
-                children = type.Methods.Select(x => new MethodViewModel(x)).OrderBy(x => x.TreeViewLabel).ToList<IAssemblyTreeViewChild>();
+
+                var methods = type.Methods.Select(x => new MethodViewModel(x)).OrderBy(x => x.TreeViewLabel).ToList<IAssemblyTreeViewChild>();
+                var fields = type.Fields.Select(x => new FieldViewModel(x)).OrderBy(x => x.TreeViewLabel).ToList<IAssemblyTreeViewChild>();
+
+                children = methods.Union(fields).ToList();
             }
         }
 
@@ -215,7 +232,8 @@ namespace NativeCilDetective
             }
 
             MethodMenuItem.Visibility = AssemblyTreeView.SelectedItem is MethodViewModel ? Visibility.Visible : Visibility.Hidden;
-            
+            FieldMenuItem.Visibility = AssemblyTreeView.SelectedItem is FieldViewModel ? Visibility.Visible : Visibility.Hidden;
+
             if (AssemblyTreeView.SelectedItem is MethodViewModel methodViewModel)
             {
                 Stopwatch sw = new Stopwatch();
@@ -257,6 +275,7 @@ namespace NativeCilDetective
 
         private bool OpenAndSelectMethod(IAssemblyTreeViewChild parent, MethodDefinition method)
         {
+            if (parent.TreeViewChildren == null) return false;
             foreach (var item in parent.TreeViewChildren)
             {
                 if (item is MethodViewModel methodViewModel)
@@ -301,6 +320,24 @@ namespace NativeCilDetective
                 var usages = detective.UsageFinder.FindUsages(methodViewModel.Method);
                 sw.Stop();
                 Console.WriteLine($"Took {sw.ElapsedMilliseconds} ms to find usages.");
+
+                UsageResultsListView.Items.Clear();
+                foreach (var usage in usages)
+                {
+                    UsageResultsListView.Items.Add(new UsageViewModel(usage));
+                }
+            }
+        }
+
+        private void FieldFindUsages_Click(object sender, RoutedEventArgs e)
+        {
+            if (AssemblyTreeView.SelectedItem is FieldViewModel fieldViewModel)
+            {
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
+                var usages = detective.UsageFinder.FindUsages(fieldViewModel.Field);
+                sw.Stop();
+                Console.WriteLine($"Took {sw.ElapsedMilliseconds} ms to find field usages.");
 
                 UsageResultsListView.Items.Clear();
                 foreach (var usage in usages)

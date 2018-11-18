@@ -15,6 +15,9 @@
             <MenuItem Name="MethodMenuItem" Header="Method" Visibility="Hidden">
                 <MenuItem Header="Find usages" Click="MethodFindUsages_Click" />
             </MenuItem>
+            <MenuItem Name="FieldMenuItem" Header="Field" Visibility="Hidden">
+                <MenuItem Header="Find usages" Click="FieldFindUsages_Click" />
+            </MenuItem>
         </Menu>
         <Grid>
             <Grid.ColumnDefinitions>

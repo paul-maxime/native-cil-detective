@@ -46,5 +46,31 @@ namespace NativeCilDetective.Disassembler
             var instructions = disassembler.DisassembleMethod(OffsetsCollector.GetMethodOffset(methodToSearch));
             return instructions.Where(x => x.CalledMethod == methodToFind).Count();
         }
+
+        public List<Usage> FindUsages(FieldDefinition fieldToFind)
+        {
+            var usages = new List<Usage>();
+
+            foreach (MethodDefinition method in offsets.Methods)
+            {
+                long offset = OffsetsCollector.GetMethodOffset(method);
+                if (offset > -1)
+                {
+                    int count = GetFieldUsagesInMethod(fieldToFind, method);
+                    if (count > 0)
+                    {
+                        usages.Add(new Usage { Method = method, Count = count });
+                    }
+                }
+            }
+
+            return usages;
+        }
+
+        private int GetFieldUsagesInMethod(FieldDefinition fieldToFind, MethodDefinition methodToSearch)
+        {
+            var instructions = disassembler.DisassembleMethod(OffsetsCollector.GetMethodOffset(methodToSearch));
+            return instructions.Where(x => x.UsedField == fieldToFind).Count();
+        }
     }
 }
