@@ -36,7 +36,7 @@ namespace NativeCilDetective
         public MainWindow()
         {
             InitializeComponent();
-            AnalysePath(@"C:\Users\Maxou\Desktop\Il2CppDumper\Il2CppDumper\bin\Debug\", @"C:\Users\Maxou\Downloads\PROClient x64\GameAssembly.dll");
+            AnalysePath(@"Il2CppDumper\Il2CppDumper\bin\Debug", @"Contents\Frameworks\GameAssembly.dylib");
         }
 
         abstract class TreeElementViewModelBase : IAssemblyTreeViewChild, INotifyPropertyChanged

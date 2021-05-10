@@ -86,7 +86,7 @@ namespace NativeCilDetective.Disassembler
             ulong offset = 0;
             foreach (var instruction in instructions)
             {
-                translated.Add(translater.Translate(instruction, offset));
+                translated.Add(translater.Translate(instruction, offset, translated));
                 offset += (ulong)instruction.ByteLength;
             }
 

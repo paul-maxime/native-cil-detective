@@ -44,7 +44,7 @@ namespace NativeCilDetective.Disassembler
             StringsFromOffsets = new Dictionary<long, string>();
             foreach (var line in lines)
             {
-                long offset = long.Parse(line.Groups[1].Value, NumberStyles.HexNumber) - 0x180000000 - 0xC00;
+                long offset = long.Parse(line.Groups[1].Value, NumberStyles.HexNumber); // - 0x180000000 - 0xC00;
                 StringsFromOffsets.Add(offset, line.Groups[2].Value.Replace(@"\'", "'"));
             }
         }
