@@ -1,4 +1,5 @@
 ﻿using Mono.Cecil;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -10,6 +11,12 @@ namespace NativeCilDetective.Disassembler
 {
     public class OffsetsCollector
     {
+        class StringOffset
+        {
+            public string Value { get; set; }
+            public string Address { get; set; }
+        }
+
         public string Il2cppDumpPath { get; }
 
         public IReadOnlyCollection<AssemblyDefinition> Assemblies { get => assemblies.AsReadOnly(); }
@@ -29,26 +36,23 @@ namespace NativeCilDetective.Disassembler
 
         public void ReadStrings()
         {
-            string pyfile = Path.Combine(Il2cppDumpPath, "script.py");
-            if (!File.Exists(pyfile))
+            StringsFromOffsets = new Dictionary<long, string>();
+            string jsonfile = Path.Combine(Il2cppDumpPath, "stringliteral.json");
+
+            if (!File.Exists(jsonfile))
             {
-                throw new Exception($"Could not find script.py in '{Il2cppDumpPath}'.");
+                throw new Exception($"Could not find stringliteral.json in '{Il2cppDumpPath}'.");
             }
 
-            Regex regex = new Regex(@"^SetString\(0x([0-9A-Z]+), r'(.*)'\)$");
+            var offsets = JsonConvert.DeserializeObject<StringOffset[]>(File.ReadAllText(jsonfile));
 
-            var lines = File.ReadAllLines(pyfile)
-                .Where(x => x.StartsWith("SetString("))
-                .Select(x => regex.Match(x));
-
-            StringsFromOffsets = new Dictionary<long, string>();
-            foreach (var line in lines)
+            foreach (var offset in offsets)
             {
-                long offset = long.Parse(line.Groups[1].Value, NumberStyles.HexNumber); // - 0x180000000 - 0xC00;
-                StringsFromOffsets.Add(offset, line.Groups[2].Value.Replace(@"\'", "'"));
+                // Subtracting 0xC00 is not required on the MacOS builds?
+                StringsFromOffsets.Add(long.Parse(offset.Address.Replace("0x", ""), NumberStyles.HexNumber) - 0xC00, offset.Value);
             }
         }
-        
+
         public void ReadMethods()
         {
             string folder = Path.Combine(Il2cppDumpPath, "DummyDll");

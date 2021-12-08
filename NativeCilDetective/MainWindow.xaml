@@ -10,6 +10,7 @@
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="File">
+                <MenuItem Header="Find string" Click="FindString_Click" />
                 <MenuItem Header="Quit" />
             </MenuItem>
             <MenuItem Name="MethodMenuItem" Header="Method" Visibility="Hidden">

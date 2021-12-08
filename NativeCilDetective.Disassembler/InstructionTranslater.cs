@@ -64,7 +64,7 @@ namespace NativeCilDetective.Disassembler
 
             if (!currentMethod.IsStatic && !currentMethod.IsConstructor)
             {
-                registers[Register.RDI] = new ThisValue();
+                registers[Register.RCX] = new ThisValue(); // Seems to be RDI on MacOS builds?
             }
         }
 

@@ -36,7 +36,7 @@ namespace NativeCilDetective
         public MainWindow()
         {
             InitializeComponent();
-            AnalysePath(@"Il2CppDumper\Il2CppDumper\bin\Debug", @"Contents\Frameworks\GameAssembly.dylib");
+            AnalysePath(@"Path/To/Il2CppDumperOutput", @"Path/To/GameAssembly.dll");
         }
 
         abstract class TreeElementViewModelBase : IAssemblyTreeViewChild, INotifyPropertyChanged
@@ -344,6 +344,21 @@ namespace NativeCilDetective
                 {
                     UsageResultsListView.Items.Add(new UsageViewModel(usage));
                 }
+            }
+        }
+
+        private void FindString_Click(object sender, RoutedEventArgs e)
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            var usages = detective.UsageFinder.FindUsages("The string to search");
+            sw.Stop();
+            Console.WriteLine($"Took {sw.ElapsedMilliseconds} ms to find field usages.");
+
+            UsageResultsListView.Items.Clear();
+            foreach (var usage in usages)
+            {
+                UsageResultsListView.Items.Add(new UsageViewModel(usage));
             }
         }
 
